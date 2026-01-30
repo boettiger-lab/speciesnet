@@ -16,6 +16,7 @@ USER ${NB_USER}
 # rocker/ml already has torch, torchvision, numpy, pandas, pillow, scikit-learn, opencv
 # We add the remaining dependencies that speciesnet needs
 RUN mamba install -y -c conda-forge \
+    python=3.11 \
     humanfriendly \
     matplotlib \
     seaborn \

@@ -1,7 +1,7 @@
 test_that("SpeciesNet loads and predicts species", {
   skip_if_not_installed("reticulate")
 
-  # Ensure python dependency is present (install in temp path if feasible, or skip)
+  # Ensure python dependency is present
   if (!reticulate::py_module_available("speciesnet")) {
     skip("SpeciesNet python package not available")
   }
@@ -10,10 +10,9 @@ test_that("SpeciesNet loads and predicts species", {
   model <- load_speciesnet()
   expect_true(!is.null(model))
 
-  # Use bundled image (we'll need to check if these exist or create new ones)
+  # Use bundled image
   img_path <- system.file("img", "Caltech_Animal.jpg", package = "speciesnet")
 
-  # Skip if image doesn't exist (we may need to update inst/img later)
   if (!file.exists(img_path) || img_path == "") {
     skip("Test images not available")
   }
@@ -29,7 +28,7 @@ test_that("SpeciesNet loads and predicts species", {
   expect_true(nchar(top_species) > 0)
 })
 
-test_that("SpeciesNet handles multiple images", {
+test_that("SpeciesNet handles multiple images and named vectors", {
   skip_if_not_installed("reticulate")
 
   if (!reticulate::py_module_available("speciesnet")) {
@@ -38,11 +37,10 @@ test_that("SpeciesNet handles multiple images", {
 
   model <- load_speciesnet()
 
-  # Test with multiple images (if available)
+  # Test with multiple images and names (reproduction of the fix)
   image_files <- c(
-    system.file("img", "Caltech_Animal.jpg", package = "speciesnet"),
-    system.file("img", "Caltech_Vehicle.jpg", package = "speciesnet"),
-    system.file("img", "Caltech_Empty.jpg", package = "speciesnet")
+    animal = system.file("img", "Caltech_Animal.jpg", package = "speciesnet"),
+    vehicle = system.file("img", "Caltech_Vehicle.jpg", package = "speciesnet")
   )
 
   # Filter out non-existent images
@@ -52,9 +50,49 @@ test_that("SpeciesNet handles multiple images", {
     skip("Test images not available")
   }
 
+  # Test named vector (this previously threw TypeError)
   predictions <- predict_species(model, image_files)
   expect_true(is.list(predictions))
   expect_equal(length(predictions$predictions), length(image_files))
+
+  # Test unnamed version
+  predictions_unnamed <- predict_species(model, unname(image_files))
+  expect_equal(length(predictions_unnamed$predictions), length(image_files))
+})
+
+test_that("SpeciesNet handles coordinates and geofencing parameters", {
+  skip_if_not_installed("reticulate")
+
+  if (!reticulate::py_module_available("speciesnet")) {
+    skip("SpeciesNet python package not available")
+  }
+
+  model <- load_speciesnet()
+  img_path <- system.file("img", "Caltech_Animal.jpg", package = "speciesnet")
+
+  if (!file.exists(img_path) || img_path == "") {
+    skip("Test images not available")
+  }
+
+  # Test with single coordinates
+  predictions_single <- predict_species(
+    model,
+    img_path,
+    latitude = 34.147,
+    longitude = -118.144,
+    country = "USA"
+  )
+  expect_true(is.list(predictions_single))
+
+  # Test with vector coordinates (multiple images)
+  imgs <- rep(img_path, 2)
+  predictions_vector <- predict_species(
+    model,
+    imgs,
+    latitude = c(34.1, 35.1),
+    longitude = c(-118.1, -119.1)
+  )
+  expect_equal(length(predictions_vector$predictions), 2)
 })
 
 test_that("get_top_species handles empty predictions", {

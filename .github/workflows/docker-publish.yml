@@ -47,9 +47,9 @@ jobs:
         id: meta
         run: |
           if [ "${{ matrix.flavor }}" == "cpu" ]; then
-            TAGS="ghcr.io/boettiger-lab/megadetector:latest"
+            TAGS="ghcr.io/boettiger-lab/speciesnet:latest"
           elif [ "${{ matrix.flavor }}" == "gpu" ]; then
-            TAGS="ghcr.io/boettiger-lab/megadetector:cuda"
+            TAGS="ghcr.io/boettiger-lab/speciesnet:cuda"
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 

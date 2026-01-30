@@ -5,6 +5,8 @@ Authors@R: person("First", "Last", email = "first.last@example.com", role = c("a
 Description: R wrapper for the Python speciesnet package from Google's cameratrapai project.
     Provides functions to classify species in camera trap images using deep learning models.
 License: MIT + file LICENSE
+URL: https://boettiger-lab.github.io/speciesnet/, https://github.com/boettiger-lab/speciesnet
+BugReports: https://github.com/boettiger-lab/speciesnet/issues
 Encoding: UTF-8
 LazyData: true
 Imports: 

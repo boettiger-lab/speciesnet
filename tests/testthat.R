@@ -1,4 +1,4 @@
 library(testthat)
-library(megadetector)
+library(speciesnet)
 
-test_check("megadetector")
+test_check("speciesnet")

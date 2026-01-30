@@ -6,3 +6,6 @@
 ^pkgdown$
 ^README\.Rmd$
 ^devtools_check\.log$
+^demo\.md$
+^test_package\.R$
+^_pkgdown\.yml$

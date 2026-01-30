@@ -19,9 +19,3 @@ reference:
   contents:
   - get_top_species
   - get_detections
-
-articles:
-- title: Getting Started
-  navbar: ~
-  contents:
-  - speciesnet

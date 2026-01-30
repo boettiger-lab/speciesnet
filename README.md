@@ -15,10 +15,11 @@ model, allowing users to classify species in camera trap images using
 deep learning from within R.
 
 SpeciesNet provides species-level classification (not just
-animal/person/vehicle detection) and includes: - **Ensemble approach**
-combining detector + classifier - **Geofencing support** to filter
-predictions by geographic location - **High accuracy** trained on
-millions of camera trap images
+animal/person/vehicle detection) and includes:
+
+- **Ensemble approach** combining detector + classifier
+- **Geofencing support** to filter predictions by geographic location
+- **High accuracy** trained on millions of camera trap images
 
 ## Installation
 

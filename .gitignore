@@ -12,6 +12,9 @@ __pycache__
 check.log
 devtools_check.log
 
+# Generated README preview
+README.html
+
 # Python virtual environments
 .venv/
 venv/

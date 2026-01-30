@@ -79,25 +79,38 @@ predict_species <- function(
   }
 
   # Prepare instances dict
-  instances <- lapply(image_paths, function(path) {
-    instance <- list(filepath = path)
+  # Use unname to ensure we get a list in Python, not a dict (if image_paths are named)
+  instances <- lapply(seq_along(image_paths), function(i) {
+    path <- image_paths[i]
+    instance <- list(filepath = unname(path))
+
     if (!is.null(country)) {
       instance$country <- country
     }
     if (!is.null(admin1_region)) {
       instance$admin1_region <- admin1_region
     }
+
+    # Handle optional coordinates (can be single value or vector)
     if (!is.null(latitude)) {
-      instance$latitude <- latitude
+      if (length(latitude) >= i) {
+        instance$latitude <- latitude[i]
+      } else {
+        instance$latitude <- latitude[1]
+      }
     }
     if (!is.null(longitude)) {
-      instance$longitude <- longitude
+      if (length(longitude) >= i) {
+        instance$longitude <- longitude[i]
+      } else {
+        instance$longitude <- longitude[1]
+      }
     }
     instance
   })
 
   # Convert to python dict format
-  instances_dict <- list(instances = instances)
+  instances_dict <- list(instances = unname(instances))
 
   cli::cli_alert_info(
     "Running predictions on {length(image_paths)} image(s)..."

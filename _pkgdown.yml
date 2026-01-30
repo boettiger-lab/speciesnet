@@ -1,0 +1,27 @@
+url: https://boettiger-lab.github.io/speciesnet/
+template:
+  bootstrap: 5
+
+reference:
+- title: Installation
+  desc: Functions to install the Python package
+  contents:
+  - install_speciesnet
+
+- title: Model Loading and Prediction
+  desc: Core functions for species classification
+  contents:
+  - load_speciesnet
+  - predict_species
+
+- title: Results Processing
+  desc: Extract information from predictions
+  contents:
+  - get_top_species
+  - get_detections
+
+articles:
+- title: Getting Started
+  navbar: ~
+  contents:
+  - speciesnet

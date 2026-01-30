@@ -1,0 +1,19 @@
+{
+  "name": "SpeciesNet R Package",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "REditorSupport.r",
+        "ms-python.python"
+      ]
+    }
+  },
+  "remoteUser": "rstudio",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
+}

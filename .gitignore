@@ -1,0 +1,32 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.so
+*.o
+__pycache__
+/src
+/docs
+
+# Ignore check logs
+check.log
+devtools_check.log
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# R package build artifacts
+*.tar.gz
+*.Rcheck/
+
+# IDE
+.idea/
+
+.venv/

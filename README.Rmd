@@ -1,0 +1,128 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# speciesnet
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/boettiger-lab/speciesnet/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/boettiger-lab/speciesnet/actions/workflows/check-standard.yaml)
+[![Docker](https://github.com/boettiger-lab/speciesnet/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/boettiger-lab/speciesnet/actions/workflows/docker-publish.yml)
+<!-- badges: end -->
+
+The `speciesnet` package provides an R wrapper for Google's [SpeciesNet](https://github.com/google/cameratrapai) camera trap AI model, allowing users to classify species in camera trap images using deep learning from within R.
+
+SpeciesNet provides species-level classification (not just animal/person/vehicle detection) and includes:
+- **Ensemble approach** combining detector + classifier
+- **Geofencing support** to filter predictions by geographic location
+- **High accuracy** trained on millions of camera trap images
+
+## Installation
+
+You can install the package from GitHub:
+
+```r
+# install.packages("remotes")
+remotes::install_github("boettiger-lab/speciesnet")
+```
+
+## Setup
+
+The package requires a Python environment. It will automatically install the necessary `speciesnet` python package:
+
+```{r setup, eval=FALSE}
+library(speciesnet)
+
+# Installs speciesnet python package if not present
+# Note: This downloads ~2GB of dependencies including PyTorch
+install_speciesnet()
+```
+
+## Usage
+
+```r
+library(speciesnet)
+
+# 1. Load the SpeciesNet Model
+# Downloads model weights (~214MB) on first use
+model <- load_speciesnet()
+
+# 2. Predict species in images
+image_file <- "path/to/camera_trap_image.jpg"
+predictions <- predict_species(model, image_file)
+
+# 3. Extract results
+top_species <- get_top_species(predictions$predictions[[1]])
+detections <- get_detections(predictions$predictions[[1]])
+
+cat("Top species:", top_species, "\n")
+cat("Number of detections:", length(detections), "\n")
+```
+
+### Geographic Filtering
+
+You can improve prediction accuracy by providing location information:
+
+```r
+# Using country code (ISO 3166-1 alpha-3)
+predictions <- predict_species(
+  model, 
+  image_file,
+  country = "USA",
+  admin1_region = "CA"  # US state code
+)
+
+# Or using coordinates
+predictions <- predict_species(
+  model, 
+  image_file,
+  latitude = 38.5,
+  longitude = -120.5
+)
+```
+
+### Batch Processing
+
+Process multiple images at once:
+
+```r
+image_files <- c(
+  "image1.jpg",
+  "image2.jpg", 
+  "image3.jpg"
+)
+
+predictions <- predict_species(model, image_files)
+
+# Extract results for each image
+for (i in seq_along(predictions$predictions)) {
+  pred <- predictions$predictions[[i]]
+  species <- get_top_species(pred)
+  cat(sprintf("Image %d: %s\n", i, species))
+}
+```
+
+## About SpeciesNet
+
+SpeciesNet is developed by Google Research and provides state-of-the-art species classification for camera trap images. The model:
+
+- Uses SpeciesNet v4.0.2a by default (always-crop ensemble)
+- Supports 1000+ species across multiple continents
+- Provides detection bounding boxes and species classifications
+- Can be geofenced to improve accuracy in specific regions
+
+For more information, see the [official SpeciesNet repository](https://github.com/google/cameratrapai).
+
+## License
+
+MIT

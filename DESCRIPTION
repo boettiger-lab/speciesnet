@@ -1,0 +1,18 @@
+Package: speciesnet
+Title: R Wrapper for Google's SpeciesNet Camera Trap AI
+Version: 0.1.0
+Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
+Description: R wrapper for the Python speciesnet package from Google's cameratrapai project.
+    Provides functions to classify species in camera trap images using deep learning models.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    reticulate,
+    cli
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 7.3.3

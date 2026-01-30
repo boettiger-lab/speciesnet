@@ -4,18 +4,18 @@
 \alias{load_speciesnet}
 \title{Load SpeciesNet Model}
 \usage{
-load_speciesnet(model = NULL, country = NULL, admin1_region = NULL)
+load_speciesnet(model = NULL, components = "all", geofence = TRUE)
 }
 \arguments{
 \item{model}{Model identifier (default: uses SpeciesNet default model v4.0.2a).}
 
-\item{country}{Optional: 3-letter ISO country code for geofencing.}
+\item{components}{Which components to load: "all" (default), "classifier", "detector", or "ensemble".}
 
-\item{admin1_region}{Optional: First-level administrative division (e.g., US state code).}
+\item{geofence}{Whether to enable geofencing (default: TRUE).}
 }
 \value{
-A loaded SpeciesNet ensemble object (Python object).
+A loaded SpeciesNet object (Python object).
 }
 \description{
-Loads the SpeciesNet ensemble model.
+Loads the SpeciesNet model which provides an interface for running inference.
 }

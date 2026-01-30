@@ -3,17 +3,17 @@ utils::globalVariables("sn")
 
 #' Load SpeciesNet Model
 #'
-#' Loads the SpeciesNet ensemble model.
+#' Loads the SpeciesNet model which provides an interface for running inference.
 #'
 #' @param model Model identifier (default: uses SpeciesNet default model v4.0.2a).
-#' @param country Optional: 3-letter ISO country code for geofencing.
-#' @param admin1_region Optional: First-level administrative division (e.g., US state code).
-#' @return A loaded SpeciesNet ensemble object (Python object).
+#' @param components Which components to load: "all" (default), "classifier", "detector", or "ensemble".
+#' @param geofence Whether to enable geofencing (default: TRUE).
+#' @return A loaded SpeciesNet object (Python object).
 #' @export
 load_speciesnet <- function(
   model = NULL,
-  country = NULL,
-  admin1_region = NULL
+  components = "all",
+  geofence = TRUE
 ) {
   if (is.null(sn)) {
     cli::cli_abort(
@@ -21,16 +21,16 @@ load_speciesnet <- function(
     )
   }
 
-  cli::cli_alert_info("Loading SpeciesNet ensemble model...")
+  cli::cli_alert_info("Loading SpeciesNet model...")
 
-  # Import the SpeciesNetEnsemble class
-  ensemble_class <- tryCatch(
+  # Import the SpeciesNet class
+  speciesnet_class <- tryCatch(
     {
-      sn$SpeciesNetEnsemble
+      sn$SpeciesNet
     },
     error = function(e) {
       cli::cli_abort(
-        "Could not import SpeciesNetEnsemble: {e$message}"
+        "Could not import SpeciesNet: {e$message}"
       )
     }
   )
@@ -41,9 +41,12 @@ load_speciesnet <- function(
     model <- sn$DEFAULT_MODEL
   }
 
-  # Create ensemble instance
-  # SpeciesNetEnsemble(model_name, geofence=True, prediction_combiner=...)
-  model_obj <- ensemble_class(model_name = model)
+  # Create SpeciesNet instance
+  model_obj <- speciesnet_class(
+    model_name = model,
+    components = components,
+    geofence = geofence
+  )
 
   cli::cli_alert_success("SpeciesNet model loaded successfully.")
   return(model_obj)
@@ -94,7 +97,7 @@ predict_species <- function(
   })
 
   # Convert to python dict format
-  instances_dict <- reticulate::dict(instances = instances)
+  instances_dict <- list(instances = instances)
 
   cli::cli_alert_info(
     "Running predictions on {length(image_paths)} image(s)..."
@@ -103,7 +106,7 @@ predict_species <- function(
   # Call predict method
   predictions <- tryCatch(
     {
-      model$predict(instances_dict)
+      model$predict(instances_dict = instances_dict)
     },
     error = function(e) {
       cli::cli_abort("Prediction failed: {e$message}")

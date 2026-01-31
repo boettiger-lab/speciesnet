@@ -57,11 +57,8 @@ load_speciesnet <- function(
 #' Runs species prediction on one or more images.
 #'
 #' @param model A loaded SpeciesNet model object from \code{load_speciesnet}.
-#' @param image_paths Character vector of image file paths.
-#' @param country Optional: 3-letter ISO country code for geofencing.
-#' @param admin1_region Optional: First-level administrative division (e.g., US state code).
-#' @param latitude Optional: Latitude where images were taken.
-#' @param longitude Optional: Longitude where images were taken.
+#' @param batch_size Number of images to process in one batch (default: 50).
+#' @param show_progress Whether to show a progress bar (default: TRUE).
 #' @return A list containing predictions for each image.
 #' @export
 predict_species <- function(
@@ -70,7 +67,9 @@ predict_species <- function(
   country = NULL,
   admin1_region = NULL,
   latitude = NULL,
-  longitude = NULL
+  longitude = NULL,
+  batch_size = 50,
+  show_progress = TRUE
 ) {
   if (is.null(model)) {
     cli::cli_abort(
@@ -78,58 +77,94 @@ predict_species <- function(
     )
   }
 
-  # Prepare instances dict
-  # Use unname to ensure we get a list in Python, not a dict (if image_paths are named)
-  instances <- lapply(seq_along(image_paths), function(i) {
-    path <- image_paths[i]
-    instance <- list(filepath = unname(path))
+  total_images <- length(image_paths)
+  if (total_images == 0) {
+    return(list(predictions = list()))
+  }
 
-    if (!is.null(country)) {
-      instance$country <- country
-    }
-    if (!is.null(admin1_region)) {
-      instance$admin1_region <- admin1_region
-    }
+  # Initialize progress bar
+  if (show_progress) {
+    cli::cli_progress_bar("Predicting species", total = total_images)
+  }
 
-    # Handle optional coordinates (can be single value or vector)
-    if (!is.null(latitude)) {
-      if (length(latitude) >= i) {
-        instance$latitude <- latitude[i]
-      } else {
-        instance$latitude <- latitude[1]
+  all_predictions <- list()
+
+  # Process in batches
+  num_batches <- ceiling(total_images / batch_size)
+
+  for (b in seq_len(num_batches)) {
+    start_idx <- (b - 1) * batch_size + 1
+    end_idx <- min(b * batch_size, total_images)
+    batch_indices <- start_idx:end_idx
+
+    # Get batch paths
+    batch_paths <- image_paths[batch_indices]
+
+    # Prepare instances dict for this batch
+    instances <- lapply(seq_along(batch_paths), function(i) {
+      # Map global index for coordinate lookup
+      global_idx <- batch_indices[i]
+      path <- batch_paths[i]
+      instance <- list(filepath = unname(path))
+
+      if (!is.null(country)) {
+        instance$country <- country
       }
-    }
-    if (!is.null(longitude)) {
-      if (length(longitude) >= i) {
-        instance$longitude <- longitude[i]
-      } else {
-        instance$longitude <- longitude[1]
+      if (!is.null(admin1_region)) {
+        instance$admin1_region <- admin1_region
       }
+
+      # Handle optional coordinates
+      # Logic: if vector has enough elements, use specific index, else recycle first element
+      if (!is.null(latitude)) {
+        if (length(latitude) >= global_idx) {
+          instance$latitude <- latitude[global_idx]
+        } else {
+          instance$latitude <- latitude[1]
+        }
+      }
+      if (!is.null(longitude)) {
+        if (length(longitude) >= global_idx) {
+          instance$longitude <- longitude[global_idx]
+        } else {
+          instance$longitude <- longitude[1]
+        }
+      }
+      instance
+    })
+
+    # Convert to python dict format
+    instances_dict <- list(instances = unname(instances))
+
+    # Call predict method
+    predictions <- tryCatch(
+      {
+        model$predict(instances_dict = instances_dict)
+      },
+      error = function(e) {
+        cli::cli_abort("Prediction failed at batch {b}: {e$message}")
+      }
+    )
+
+    batch_result <- reticulate::py_to_r(predictions)
+
+    # Accumulate results
+    # Assuming batch_result is list(predictions = list(...))
+    if (!is.null(batch_result$predictions)) {
+      all_predictions <- c(all_predictions, batch_result$predictions)
     }
-    instance
-  })
 
-  # Convert to python dict format
-  instances_dict <- list(instances = unname(instances))
-
-  cli::cli_alert_info(
-    "Running predictions on {length(image_paths)} image(s)..."
-  )
-
-  # Call predict method
-  predictions <- tryCatch(
-    {
-      model$predict(instances_dict = instances_dict)
-    },
-    error = function(e) {
-      cli::cli_abort("Prediction failed: {e$message}")
+    if (show_progress) {
+      cli::cli_progress_update(length(batch_indices))
     }
-  )
+  }
 
-  cli::cli_alert_success("Predictions complete.")
+  if (show_progress) {
+    cli::cli_progress_done()
+    cli::cli_alert_success("Predictions complete.")
+  }
 
-  # Convert to R object
-  return(reticulate::py_to_r(predictions))
+  return(list(predictions = all_predictions))
 }
 
 #' Get Top Classification from Prediction

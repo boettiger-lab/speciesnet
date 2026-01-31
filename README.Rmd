@@ -63,11 +63,11 @@ image_file <- "path/to/camera_trap_image.jpg"
 predictions <- predict_species(model, image_file)
 
 # 3. Extract results
-top_species <- get_top_species(predictions$predictions[[1]])
-detections <- get_detections(predictions$predictions[[1]])
+# Convert predictions list to a tidy data frame
+results_df <- predictions_to_df(predictions)
 
-cat("Top species:", top_species, "\n")
-cat("Number of detections:", length(detections), "\n")
+# View top predictions and detections
+print(head(results_df))
 ```
 
 ### Geographic Filtering

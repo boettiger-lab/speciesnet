@@ -10,21 +10,17 @@ predict_species(
   country = NULL,
   admin1_region = NULL,
   latitude = NULL,
-  longitude = NULL
+  longitude = NULL,
+  batch_size = 50,
+  show_progress = TRUE
 )
 }
 \arguments{
 \item{model}{A loaded SpeciesNet model object from \code{load_speciesnet}.}
 
-\item{image_paths}{Character vector of image file paths.}
+\item{batch_size}{Number of images to process in one batch (default: 50).}
 
-\item{country}{Optional: 3-letter ISO country code for geofencing.}
-
-\item{admin1_region}{Optional: First-level administrative division (e.g., US state code).}
-
-\item{latitude}{Optional: Latitude where images were taken.}
-
-\item{longitude}{Optional: Longitude where images were taken.}
+\item{show_progress}{Whether to show a progress bar (default: TRUE).}
 }
 \value{
 A list containing predictions for each image.

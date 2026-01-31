@@ -191,17 +191,154 @@ get_top_species <- function(prediction) {
   return(prediction$classifications$classes[[1]])
 }
 
-#' Get Detections from Prediction
+#' Parse Prediction Taxonomy String
 #'
-#' Extracts detection information from a prediction result.
+#' Helper function to parse the semicolon-separated prediction string.
 #'
-#' @param prediction A single prediction result from \code{predict_species}.
-#' @return A list of detections with bounding boxes and confidence scores.
-#' @export
-get_detections <- function(prediction) {
-  if (is.null(prediction$detections)) {
-    return(list())
+#' @param x A prediction string (e.g. "id;class;order...").
+#' @return A named character vector.
+#' @noRd
+parse_prediction_string <- function(x) {
+  # Default structure if empty or blank
+  cols <- c(
+    "taxon_id", "class", "order", "family", "genus", "species", "common_name"
+  )
+  empty_res <- stats::setNames(rep(NA_character_, length(cols)), cols)
+
+  if (is.null(x) || length(x) == 0 || is.na(x) || x == "") {
+    return(empty_res)
   }
 
-  return(prediction$detections)
+  parts <- strsplit(x, ";")[[1]]
+
+  # Pad with NA if short, truncate if long (though it should be fixed length)
+  if (length(parts) < length(cols)) {
+    parts <- c(parts, rep(NA_character_, length(cols) - length(parts)))
+  } else if (length(parts) > length(cols)) {
+    parts <- parts[seq_along(cols)] # Take first N
+  }
+
+  # Replace empty strings with NA
+  parts[parts == ""] <- NA_character_
+
+  stats::setNames(parts, cols)
 }
+
+#' Convert Predictions to Data Frame
+#'
+#' Parses the raw list output from \code{predict_species} into a tidy data frame.
+#' Each row represents a unique detection (or the image if no detections).
+#' Includes full taxonomy and detection details.
+#'
+#' @param predictions A list returned by \code{predict_species}.
+#' @return A data.frame with columns for file path, taxonomy, scores, and detections.
+#' @export
+predictions_to_df <- function(predictions) {
+  if (is.null(predictions) || length(predictions) == 0) {
+    return(data.frame())
+  }
+  
+  # Handle case where input is the wrapper list containing 'predictions'
+  if ("predictions" %in% names(predictions)) {
+    predictions <- predictions$predictions
+  }
+
+  # Process each image result
+  rows <- lapply(predictions, function(pred) {
+    # Basic info
+    filepath <- pred$filepath
+    
+    # Parse top prediction (taxonomy)
+    # pred$prediction is the top-1 taxonomy string
+    top_taxa <- parse_prediction_string(pred$prediction)
+    
+    # Top score
+    # prediction_score is usually a single number (or list of 1)
+    score <- as.numeric(pred$prediction_score)
+    if (length(score) == 0) score <- NA_real_
+
+    # Alternatives summary
+    # classifications$classes and $scores usually contain top-K
+    alts <- NA_character_
+    if (!is.null(pred$classifications$classes) && length(pred$classifications$classes) > 1) {
+      # Skip the first one (it's the top prediction)
+      alt_classes <- pred$classifications$classes[-1]
+      alt_scores <- pred$classifications$scores[-1]
+      
+      # Extract common names or species from the strings for brevity
+      # Format: "Common Name (Score)"
+      alt_names <- sapply(alt_classes, function(s) {
+        parts <- strsplit(s, ";")[[1]]
+        # diverse strategies for what names exist, usually last is common name
+        if (length(parts) > 0) parts[length(parts)] else "unknown"
+      })
+      
+      # Combine
+      alts <- paste(
+        sprintf("%s (%.3f)", alt_names, as.numeric(alt_scores)), 
+        collapse = "; "
+      )
+    }
+
+    # Detections
+    dets <- pred$detections
+    
+    base_row <- data.frame(
+      filepath = filepath,
+      as.list(top_taxa),
+      prediction_score = score,
+      alternatives = alts,
+      stringsAsFactors = FALSE
+    )
+    
+    if (length(dets) == 0) {
+      # No detections: return one row per image
+      # Add NA columns for detection fields
+      det_cols <- data.frame(
+        bbox_category = NA_character_,
+        bbox_conf = NA_real_,
+        bbox_x = NA_real_,
+        bbox_y = NA_real_,
+        bbox_w = NA_real_,
+        bbox_h = NA_real_
+      )
+      return(cbind(base_row, det_cols))
+    } else {
+      # One row per detection
+      det_rows <- do.call(rbind, lapply(dets, function(d) {
+        # bbox is typically [ymin, xmin, h, w] or similar? 
+        # CAUTION: Inspecting existing data structure from user logs:
+        # .. ..$ bbox    : num [1:4] 0.606 0.5924 0.0547 0.0542
+        # Usually standard YOLO/COCO is [x, y, w, h] or [y_min, x_min, y_max, x_max]
+        # SpeciesNet (Google) often uses [ymin, xmin, ymax, xmax] relative?
+        # User log shows 4 numbers. Let's store them as bbox 1-4 for now or x/y/w/h if we assume standard.
+        # Assuming [x, y, w, h] normalized based on typical detection outputs in these projects.
+        # If it's [ymin, xmin, height, width], we'll just map them 1-to-1 for now.
+        
+        b <- as.numeric(d$bbox)
+        # Map to x, y, w, h (assuming standard order, or just bbox1..4)
+        # Let's label them generically if unsure, but user asked for "bbox"
+        
+        data.frame(
+          bbox_category = as.character(d$category),
+          bbox_conf = as.numeric(d$conf),
+          bbox_x = b[1], # TBD strictly on coordinate system
+          bbox_y = b[2],
+          bbox_w = b[3],
+          bbox_h = b[4],
+          stringsAsFactors = FALSE
+        )
+      }))
+      
+      # Replicate base info for all detections
+      # Use merge/cbind equivalent
+      # Replicate the base_row N times
+      base_replicated <- base_row[rep(1, nrow(det_rows)), , drop = FALSE]
+      return(cbind(base_replicated, det_rows))
+    }
+  })
+
+  # Combine all
+  do.call(rbind, rows)
+}
+

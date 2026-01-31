@@ -37,10 +37,14 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
+    locales \
     && rm -rf /var/lib/apt/lists/* && \
+    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     python3 -m venv $VIRTUAL_ENV && \
     chgrp -R $NB_USER $VIRTUAL_ENV && \
     chmod -R g+rwx $VIRTUAL_ENV
+
+ENV LANG=en_US.UTF-8
 
 # Upgrade pip and install core packages
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel

@@ -16,6 +16,15 @@ sn <- NULL
     )
   }
 
+  # Set TorchInductor cache dir to avoid temp dir detritus in R CMD check
+  if (Sys.getenv("TORCHINDUCTOR_CACHE_DIR") == "") {
+    cache_dir <- tools::R_user_dir("speciesnet", "cache")
+    if (!dir.exists(cache_dir)) {
+      dir.create(cache_dir, recursive = TRUE)
+    }
+    Sys.setenv(TORCHINDUCTOR_CACHE_DIR = cache_dir)
+  }
+
   # Delay load the module
   sn <<- reticulate::import("speciesnet", delay_load = TRUE)
 }

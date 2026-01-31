@@ -30,6 +30,17 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          pip install speciesnet
+          # Install system deps for opencv if needed (often needed for headless envs)
+          # sudo apt-get update && sudo apt-get install -y libgl1
+
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.

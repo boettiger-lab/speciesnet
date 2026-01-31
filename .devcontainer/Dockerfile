@@ -21,7 +21,7 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV RETICULATE_PYTHON="$VIRTUAL_ENV/bin/python"
 # Prevent conflict between host/system libraries and pip-installed torch wheels
-ENV LD_LIBRARY_PATH=""
+ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64"
 
 USER root
 

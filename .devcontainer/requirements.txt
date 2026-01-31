@@ -11,9 +11,9 @@ nx-cugraph-cu13==25.12.*
 
 --pre
 --extra-index-url=https://download.pytorch.org/whl/nightly/cu130
-torch
-torchvision
-torchaudio
+torch>=2.11.0.dev
+torchvision>=0.25.0.dev
+torchaudio>=2.5.0.dev
 
 # JupyterLab and extensions
 jupyterlab

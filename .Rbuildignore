@@ -1,3 +1,4 @@
+^analysis$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.
@@ -9,3 +10,5 @@
 ^demo\.md$
 ^test_package\.R$
 ^_pkgdown\.yml$
+^data$
+

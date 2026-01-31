@@ -57,6 +57,11 @@ load_speciesnet <- function(
 #' Runs species prediction on one or more images.
 #'
 #' @param model A loaded SpeciesNet model object from \code{load_speciesnet}.
+#' @param image_paths Character vector of image file paths.
+#' @param country Optional: 3-letter ISO country code for geofencing.
+#' @param admin1_region Optional: First-level administrative division (e.g., US state code).
+#' @param latitude Optional: Latitude where images were taken.
+#' @param longitude Optional: Longitude where images were taken.
 #' @param batch_size Number of images to process in one batch (default: 50).
 #' @param show_progress Whether to show a progress bar (default: TRUE).
 #' @return A list containing predictions for each image.

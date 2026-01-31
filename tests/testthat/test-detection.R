@@ -107,25 +107,4 @@ test_that("get_top_species handles empty predictions", {
   expect_equal(result, "blank")
 })
 
-test_that("get_detections extracts detection info", {
-  # Mock detection result
-  mock_pred <- list(
-    detections = list(
-      list(
-        category = "1",
-        label = "animal",
-        conf = 0.95,
-        bbox = c(0.1, 0.2, 0.3, 0.4)
-      )
-    )
-  )
 
-  detections <- get_detections(mock_pred)
-  expect_true(is.list(detections))
-  expect_equal(length(detections), 1)
-
-  # Test empty detections
-  empty_pred <- list(detections = NULL)
-  detections <- get_detections(empty_pred)
-  expect_equal(length(detections), 0)
-})

@@ -16,5 +16,6 @@ reference:
 
 - title: Results Processing
   desc: Extract information from predictions
+  contents:
   - get_top_species
   - predictions_to_df

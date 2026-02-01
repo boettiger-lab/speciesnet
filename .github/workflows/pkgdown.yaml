@@ -1,3 +1,5 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
     branches: [main, master]
@@ -15,6 +17,8 @@ jobs:
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+    container:
+      image: ghcr.io/boettiger-lab/speciesnet:latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:
@@ -24,27 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
+      - name: Mark git safe dir
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - uses: r-lib/actions/setup-pandoc@v2
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Python dependencies
+      - name: Install pkgdown and local package
         run: |
-          pip install speciesnet
-          # Install system deps for opencv if needed (often needed for headless envs)
-          # sudo apt-get update && sudo apt-get install -y libgl1
-
-
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
+          install.packages("pkgdown")
+          remotes::install_local(".", dependencies = FALSE)
+        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

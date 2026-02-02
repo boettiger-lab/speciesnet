@@ -9,6 +9,7 @@ URL: https://boettiger-lab.github.io/speciesnet/, https://github.com/boettiger-l
 BugReports: https://github.com/boettiger-lab/speciesnet/issues
 Encoding: UTF-8
 LazyData: true
+Imports: 
     reticulate,
     cli,
     jsonlite

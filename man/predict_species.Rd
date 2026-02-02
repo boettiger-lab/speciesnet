@@ -12,7 +12,8 @@ predict_species(
   latitude = NULL,
   longitude = NULL,
   batch_size = 50,
-  show_progress = TRUE
+  show_progress = TRUE,
+  output_file = NULL
 )
 }
 \arguments{
@@ -31,9 +32,11 @@ predict_species(
 \item{batch_size}{Number of images to process in one batch (default: 50).}
 
 \item{show_progress}{Whether to show a progress bar (default: TRUE).}
+
+\item{output_file}{Optional: Path to a JSONL file to stream results to. If provided, results are not returned in memory.}
 }
 \value{
-A list containing predictions for each image.
+A list containing predictions for each image, or the output file path if output_file is specified.
 }
 \description{
 Runs species prediction on one or more images.

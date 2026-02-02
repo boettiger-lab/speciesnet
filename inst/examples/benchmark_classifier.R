@@ -8,14 +8,11 @@ script_start_time <- Sys.time()
 
 # 1. Configuration & Path Detection
 # Detect if running from project root or inside analysis directory (e.g. Docker)
-if (dir.exists("/cct_images")) {
-  image_dir <- "/cct_images"
-  output_path <- "analysis/benchmark_results.csv"
-} else if (dir.exists("/cct_images")) {
-  image_dir <- "/cct_images"
+if (dir.exists("/tmp/cct_images")) {
+  image_dir <- "/tmp/cct_images"
   output_path <- "benchmark_results.csv"
 } else {
-  stop("Could not find 'cct_images' directory. Please run this script from the project root or the 'analysis' directory.")
+  stop("Could not find 'cct_images' directory")
 }
 
 subset_size <- 1000

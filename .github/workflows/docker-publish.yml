@@ -12,6 +12,15 @@ jobs:
     permissions:
       contents: read
       packages: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build_type: standard
+            tag: latest
+          - build_type: nightly
+            tag: nightly
 
     steps:
       - name: Free Disk Space
@@ -41,8 +50,7 @@ jobs:
           context: .devcontainer
           file: .devcontainer/Dockerfile
           push: true
-          # Providing both latest and cuda tags for clarity
-          tags: |
-            ghcr.io/boettiger-lab/speciesnet:latest
-            ghcr.io/boettiger-lab/speciesnet:cuda
+          build-args: |
+            BUILD_TYPE=${{ matrix.build_type }}
+          tags: ghcr.io/boettiger-lab/speciesnet:${{ matrix.tag }}
           platforms: linux/amd64,linux/arm64

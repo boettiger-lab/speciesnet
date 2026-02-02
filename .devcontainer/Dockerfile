@@ -15,7 +15,9 @@ COPY requirements.txt /tmp/requirements.txt
 RUN if [ "$BUILD_TYPE" = "nightly" ]; then \
         pip install --no-cache-dir -r /tmp/requirements.txt; \
     else \
-        echo "Standard build: Skipping requirements.txt (reusing base image torch)"; \
+        echo "Standard build: Reuse base image torch, but force reinstall of torchvision to fix mismatch"; \
+        pip uninstall -y torchvision; \
+        pip install --no-cache-dir --pre torchvision --extra-index-url https://download.pytorch.org/whl/nightly/cu130; \
     fi
 
 # Install system dependencies required by OpenCV and SpeciesNet

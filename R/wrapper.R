@@ -64,7 +64,8 @@ load_speciesnet <- function(
 #' @param longitude Optional: Longitude where images were taken.
 #' @param batch_size Number of images to process in one batch (default: 50).
 #' @param show_progress Whether to show a progress bar (default: TRUE).
-#' @return A list containing predictions for each image.
+#' @param output_file Optional: Path to a JSONL file to stream results to. If provided, results are not returned in memory.
+#' @return A list containing predictions for each image, or the output file path if output_file is specified.
 #' @export
 predict_species <- function(
   model,
@@ -74,7 +75,8 @@ predict_species <- function(
   latitude = NULL,
   longitude = NULL,
   batch_size = 50,
-  show_progress = TRUE
+  show_progress = TRUE,
+  output_file = NULL
 ) {
   if (is.null(model)) {
     cli::cli_abort(
@@ -87,15 +89,30 @@ predict_species <- function(
     return(list(predictions = list()))
   }
 
+  # Initialize outputs
+  all_predictions <- list()
+  streaming <- !is.null(output_file)
+  
+  if (streaming) {
+    # Initialize/truncate output file
+    if (file.exists(output_file)) {
+      # Warn if replacing? Usually overwrite is expected behavior for simple output args
+      cli::cli_alert_info("Overwriting existing output file: {output_file}")
+      unlink(output_file)
+    }
+    file.create(output_file)
+  }
+
   # Initialize progress bar
   if (show_progress) {
     cli::cli_progress_bar("Predicting species", total = total_images)
   }
 
-  all_predictions <- list()
-
   # Process in batches
   num_batches <- ceiling(total_images / batch_size)
+  
+  # Counter for streaming verification
+  count <- 0
 
   for (b in seq_len(num_batches)) {
     start_idx <- (b - 1) * batch_size + 1
@@ -153,10 +170,23 @@ predict_species <- function(
 
     batch_result <- reticulate::py_to_r(predictions)
 
-    # Accumulate results
+    # Accumulate or Stream results
     # Assuming batch_result is list(predictions = list(...))
     if (!is.null(batch_result$predictions)) {
-      all_predictions <- c(all_predictions, batch_result$predictions)
+      if (streaming) {
+        # Stream to file (JSON Lines)
+        # Write each prediction object as a separate line
+        json_lines <- vapply(
+          batch_result$predictions, 
+          function(x) jsonlite::toJSON(x, auto_unbox = TRUE), 
+          character(1)
+        )
+        cat(json_lines, file = output_file, sep = "\n", append = TRUE)
+        count <- count + length(json_lines)
+      } else {
+        # Keep in memory
+        all_predictions <- c(all_predictions, batch_result$predictions)
+      }
     }
 
     if (show_progress) {
@@ -169,7 +199,12 @@ predict_species <- function(
     cli::cli_alert_success("Predictions complete.")
   }
 
-  return(list(predictions = all_predictions))
+  if (streaming) {
+    cli::cli_alert_info("Results written to {output_file} ({count} records).")
+    return(output_file)
+  } else {
+    return(list(predictions = all_predictions))
+  }
 }
 
 #' Get Top Classification from Prediction

@@ -34,3 +34,6 @@ __pycache__/
 
 .venv/
 analysis/
+streaming_results.jsonl
+temp_logs/
+tests/test_images/

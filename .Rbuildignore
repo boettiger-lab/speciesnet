@@ -11,4 +11,7 @@
 ^test_package\.R$
 ^_pkgdown\.yml$
 ^data$
+^streaming_results\.jsonl$
+^temp_logs$
+^tests/test_images$
 

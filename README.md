@@ -40,7 +40,7 @@ the necessary `speciesnet` python package:
 library(speciesnet)
 
 # Installs speciesnet python package if not present
-# Note: This downloads ~2GB of dependencies including PyTorch
+# Note: This could download ~2GB of dependencies including PyTorch
 install_speciesnet()
 ```
 
@@ -54,15 +54,17 @@ library(speciesnet)
 model <- load_speciesnet()
 
 # 2. Predict species in images
-image_file <- "path/to/camera_trap_image.jpg"
+# 2. Predict species in images
+# Use an example image included with the package
+image_file <- system.file("img", "Caltech_Animal.jpg", package = "speciesnet")
 predictions <- predict_species(model, image_file)
 
 # 3. Extract results
-top_species <- get_top_species(predictions$predictions[[1]])
-detections <- get_detections(predictions$predictions[[1]])
+# Convert predictions list to a tidy data frame
+results_df <- predictions_to_df(predictions)
 
-cat("Top species:", top_species, "\n")
-cat("Number of detections:", length(detections), "\n")
+# View top predictions and detections
+print(head(results_df))
 ```
 
 ### Geographic Filtering

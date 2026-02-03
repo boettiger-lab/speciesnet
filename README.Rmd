@@ -45,7 +45,7 @@ The package requires a Python environment. It will automatically install the nec
 library(speciesnet)
 
 # Installs speciesnet python package if not present
-# Note: This downloads ~2GB of dependencies including PyTorch
+# Note: This could download ~2GB of dependencies including PyTorch
 install_speciesnet()
 ```
 

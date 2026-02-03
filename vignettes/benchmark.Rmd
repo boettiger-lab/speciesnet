@@ -1,0 +1,112 @@
+---
+title: "Benchmarking SpeciesNet"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Benchmarking SpeciesNet}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+## Introduction
+
+This vignette demonstrates how to benchmark the `speciesnet` classifier on a
+larger set of images. It also covers how to set up the environment, download
+test data, and leverage GPU acceleration for faster processing.
+
+## Docker & GPU Setup
+
+While `speciesnet` can run on standard CPUs, processing large batches of images
+is significantly faster with a GPU. We provide a Docker image with all
+necessary drivers and dependencies pre-installed. Note that while neither the
+Docker image nor a GPU is required, they make processing much faster but can be
+tricky to set up manually.
+
+Our rocker-based docker image can run RStudio, JupyterLab, or VS Code
+(code-server) interfaces, as well as a terminal. 
+
+### For ESPM Students
+
+ESPM students can access GPU servers with this environment pre-installed at
+[https://espm.nrp-nautilus.io/](https://espm.nrp-nautilus.io/).
+
+## Downloading Test Images
+
+To benchmark the model, we can download a sample of 1000 images from the
+Caltech Camera Traps dataset. We have included a helper script in the package
+to facilitate this.
+
+Note that this download helper requires `rclone` to be installed (which is
+included in our Docker image).
+
+```{r download-data, eval=FALSE}
+source(system.file("examples", "download_cct.R", package = "speciesnet"))
+download_cct(n = 1000, dest = "/tmp/cct_images")
+```
+
+## Benchmarking
+
+Once the images are downloaded, we can start the benchmarking process.
+
+### 1. Load the Package and List Images
+
+First, we load the `speciesnet` package and list the images we downloaded.
+
+```{r setup-benchmark, eval=FALSE}
+library(speciesnet)
+
+image_dir <- "/tmp/cct_images"
+files <- list.files(image_dir, pattern = "\\.jpg$", full.names = TRUE, recursive = TRUE)
+
+# subset to 1000 images
+batch_files <- head(files, 1000)
+```
+
+### 2. Check for GPU Availability
+
+Using a GPU can significantly speed up the inference process. We can check if a GPU is available using `torch`.
+
+```{r check-gpu, eval=FALSE}
+torch <- reticulate::import("torch")
+torch$cuda$is_available()
+```
+
+### 3. Load the Model
+
+Next, we load the SpeciesNet model. This will download the model weights if they are not already cached.
+
+```{r load-model, eval=FALSE}
+model <- load_speciesnet()
+```
+
+### 4. Run Predictions
+
+Now we run the predictions on our batch of images. We record the start and end time to calculate the total duration.
+
+```{r run-prediction, eval=FALSE}
+start_time <- Sys.time()
+predictions <- predict_species(model, batch_files)
+end_time <- Sys.time()
+duration <- end_time - start_time
+duration
+```
+
+### 5. Analyze Performance
+
+With the predictions complete, we can calculate the throughput (images per second) and inspect the results.
+
+```{r analyze-results, eval=FALSE}
+# Calculate throughput
+throughput <- length(batch_files) / as.numeric(duration, units = "secs")
+throughput
+
+# Convert predictions to a data frame
+results_df <- predictions_to_df(predictions)
+head(results_df)
+```

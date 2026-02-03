@@ -59,7 +59,9 @@ library(speciesnet)
 model <- load_speciesnet()
 
 # 2. Predict species in images
-image_file <- "path/to/camera_trap_image.jpg"
+# 2. Predict species in images
+# Use an example image included with the package
+image_file <- system.file("img", "Caltech_Animal.jpg", package = "speciesnet")
 predictions <- predict_species(model, image_file)
 
 # 3. Extract results

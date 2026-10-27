@@ -15,3 +15,4 @@
 ^temp_logs$
 ^tests/test_images$
 
+^DISCLOSURE\.md$

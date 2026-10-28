@@ -1,28 +1,11 @@
-# Use CUDA 13 devel image (required for NVRTC/Numba per RAPIDS docs)
 FROM ghcr.io/rocker-org/cuda
 
+# rocker/cuda ships matched stable torch/torchvision/torchaudio for CUDA 13 in
+# /opt/venv (RETICULATE_PYTHON already points there), so speciesnet installs
+# on top of them without touching torch.
 
-# Default to standard build (reusing base image torch 2.10)
-ARG BUILD_TYPE=standard
-
-# Set reticulate to use the system python (in /opt/venv for this image)
-ENV RETICULATE_PYTHON=/opt/venv/bin/python
-
-# Install Python packages
-# If BUILD_TYPE is "nightly", install the heavy nightly torch requirements.
-# If "standard", skip this to reuse the base image's existing torch 2.10.
-COPY requirements.txt /tmp/requirements.txt
-RUN if [ "$BUILD_TYPE" = "nightly" ]; then \
-        pip install --no-cache-dir -r /tmp/requirements.txt; \
-    else \
-        echo "Standard build: Reuse base image torch, but force reinstall of torchvision to fix mismatch"; \
-        pip uninstall -y torchvision; \
-        pip install --no-cache-dir --pre torchvision --extra-index-url https://download.pytorch.org/whl/nightly/cu130; \
-    fi
-
-# Install system dependencies required by OpenCV and SpeciesNet
-# libgl1 is the vendor-neutral GL runtime (provides libGL.so.1) needed by opencv-python
-# libglib2.0-0 is typically needed as well
+# OpenCV (pulled in by speciesnet) needs libGL.so.1 and glib; rocker/cuda
+# does not set a locale, so generate en_US.UTF-8 for devcontainer use.
 USER root
 RUN apt-get update && apt-get install -y \
     libgl1 \
@@ -34,18 +17,18 @@ RUN apt-get update && apt-get install -y \
 
 ENV LANG=en_US.UTF-8
 
-# Install speciesnet package into the system python environment (as root)
-# This ensures it is available to all users and is in the same environment as torch
+# /opt/venv is owned by ${NB_USER}; install as that user so pip leaves no
+# root-owned files in it.
+USER ${NB_USER}
 RUN pip install --no-cache-dir speciesnet
 
-# Switch to user for R package installation
-USER ${NB_USER}
+# Install the R package from this checkout (build context is the repo root),
+# so the image matches the commit it was built from.
+COPY --chown=${NB_USER}:${NB_USER} . /tmp/speciesnet
+RUN R -e "remotes::install_local('/tmp/speciesnet', dependencies = TRUE, upgrade = 'never')" \
+    && rm -rf /tmp/speciesnet
 
-RUN R -e "install.packages(c('devtools', 'remotes')); remotes::install_github('boettiger-lab/speciesnet')"
-RUN R -e "speciesnet::install_speciesnet()"
-RUN R -e "speciesnet::load_speciesnet()"
-
-# The model weights (~214MB) will be downloaded on first use
-# and cached in /home/${NB_USER}/.cache/kagglehub/
-
-USER ${NB_USER}
+# Build-time smoke test: fails the build if speciesnet cannot import against
+# the base image's torch. The model weights (~214MB) are downloaded on first
+# use and cached in ~/.cache/kagglehub/.
+RUN R -e "speciesnet::install_speciesnet(); speciesnet::load_speciesnet()"
